@@ -11,7 +11,7 @@ Python Official Download
 
 Di chuyển tới thư mục project:
 
-cd E:\Tailieu\OneDrive\TaiLieuCongTy\TONG DAI IP\Tong dai Grandstream\Tool test UCM\iptv_server
+cd C:\iptv_server
 
 Cài dependency:
 
