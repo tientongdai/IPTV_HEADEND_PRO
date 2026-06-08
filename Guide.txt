@@ -1,0 +1,144 @@
+1. Cai python → cài Python đúng cách
+
+Python Official Download
+
+2. Khi cài PHẢI tick:
+☑ Add Python to PATH
+
+Đây là bước QUAN TRỌNG nhất.\
+
+3. Cài thư viện
+
+Di chuyển tới thư mục project:
+
+cd E:\Tailieu\OneDrive\TaiLieuCongTy\TONG DAI IP\Tong dai Grandstream\Tool test UCM\iptv_server
+
+Cài dependency:
+
+pip install -r requirements.txt
+pip install psutil
+
+4. Cài FFmpeg
+
+Tải FFmpeg: https://www.gyan.dev/ffmpeg/builds/?utm_source=chatgpt.com
+
+FFmpeg Windows Builds
+Sau khi dowload và giải nén ra ổ với thư mục C:\ffmpeg\bin
+5. Add FFmpeg vào PATH
+Mở Environment Variables
+Cách nhanh nhất
+
+Nhấn:
+
+Windows + S
+
+Gõ:
+
+environment variables
+
+Chọn:
+
+Edit the system environment variables
+Mở PATH
+
+Một cửa sổ hiện ra.
+
+Chọn:
+
+Environment Variables...
+BƯỚC 5 — Tìm PATH
+
+Ở phần:
+
+User variables
+
+hoặc:
+
+System variables
+
+Tìm: Path
+
+Sau đó:
+chọn Path
+bấm Edit
+Add FFmpeg
+
+Bấm:
+
+New
+
+Dán:
+
+C:\ffmpeg\bin
+
+Sau đó: OK
+QUAN TRỌNG
+
+Đóng toàn bộ CMD cũ.
+
+Mở CMD mới.
+
+ — Kiểm tra
+
+CMD:
+
+ffmpeg -version
+
+Nếu thành công sẽ hiện:
+
+ffmpeg version 7.x
+
+Sau khi OK
+
+Bạn vào thư mục chưa file app.py chạy:
+
+python app.py
+
+Sau đó mở:
+
+http://127.0.0.1:5000
+
+Hướng dẫn phát
+
+10. Test Multicast IPTV
+VLC
+
+Media → Open Network Stream
+
+Nhập: udp://@239.1.1.1:5000
+
+Test RTSP
+rtsp://SERVER_IP:8554/live
+
+9. Test IPTV Multicast
+VLC
+udp://@239.1.1.1:5000
+
+10. Test HLS
+
+Mở trên trình duyệt:
+
+http://SERVER_IP:5000/hls/stream.m3u8
+
+============================
+KIỂM TRA
+IPTV multicast
+
+VLC:udp://@239.1.1.1:5000
+HLS
+
+Browser:
+
+http://127.0.0.1:5000/hls/stream.m3u8
+RTSP
+
+VLC:
+
+rtsp://SERVER_IP:8554/live
+RTSP Camera Input
+
+Ví dụ:
+
+rtsp://admin:123456@192.168.1.100:554/stream1
+rtsp://admin:Admin%40123@192.168.1.212:554   ---> @=%40
+rtsp://admin:Admin123@192.168.1.212:554
