@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPTV HEADEND PRO | Control Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    
+    <style>
+        :root {
+            --bg-dark: #0f172a; --card-bg: #1e293b; --accent: #3b82f6; 
+            --accent-hover: #2563eb; --text-main: #f1f5f9; --text-muted: #94a3b8; 
+            --success: #22c55e; --danger: #ef4444; --box-bg: #334155;
+        }
+
+        body { background-color: var(--bg-dark); color: var(--text-main); font-family: 'Inter', sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        /* TOPBAR & DASHBOARD */
+        .topbar { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 20px 30px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .topbar h1 { margin: 0; font-size: 24px; color: #60a5fa; letter-spacing: 1px;}
+        .stream-indicator { display: flex; align-items: center; gap: 10px; background: #000; padding: 8px 15px; border-radius: 20px; font-weight: 600; font-size: 14px;}
+        .dot { width: 10px; height: 10px; background: var(--danger); border-radius: 50%; box-shadow: 0 0 10px var(--danger); }
+        .dot.active { background: var(--success); box-shadow: 0 0 10px var(--success); }
+
+        .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
+        .dash-box { background: var(--card-bg); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);}
+        .dash-box h2 { font-size: 32px; margin: 10px 0 0; color: var(--accent); }
+
+        /* LƯỚI BỐ CỤC CHÍNH */
+        .grid-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
+        
+        .card { background: var(--card-bg); padding: 25px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);}
+        .card h2 { margin-top: 0; font-size: 18px; color: var(--text-muted); border-bottom: 1px solid #334155; padding-bottom: 15px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px;}
+
+        /* FORM INPUTS & NÚT BẤM */
+        input[type="text"], input[type="number"], select, input[type="file"] {
+            background: #0f172a; border: 1px solid #475569; color: #fff; padding: 12px 15px; border-radius: 8px; margin-bottom: 12px; width: 100%; box-sizing: border-box; font-family: 'Inter', sans-serif;
+        }
+        input[type="text"]:focus, select:focus { outline: none; border-color: var(--accent); }
+        
+        button { cursor: pointer; padding: 12px 20px; border-radius: 8px; border: none; font-weight: 600; color: white; transition: 0.2s; font-family: 'Inter', sans-serif; text-transform: uppercase; font-size: 13px;}
+        .primary-btn { background: var(--accent); width: 100%; } .primary-btn:hover { background: var(--accent-hover); }
+        .start-btn { background: var(--success); } .start-btn:hover { background: #16a34a; }
+        .stop-btn { background: var(--danger); } .stop-btn:hover { background: #dc2626; }
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-group button { flex: 1; }
+
+        /* STREAMING HUB */
+        .stream-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stream-box { background: var(--box-bg); padding: 20px; border-radius: 8px; border: 1px solid #475569; }
+        .stream-box h3 { margin-top: 0; color: #e2e8f0; font-size: 15px; margin-bottom: 15px; text-transform: uppercase;}
+        .full-width { grid-column: 1 / -1; }
+
+        /* LISTS & PREVIEWS */
+        #playlist, .logo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; max-height: 250px; overflow-y: auto; margin-top: 15px; padding: 10px; background: #0f172a; border-radius: 8px; border: 1px solid #334155; }
+        .video-item { background: #1e293b; padding: 12px; border-radius: 6px; font-size: 13px; border: 1px solid #475569;}
+        .video-item label { cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        
+        .logo-item { background: #1e293b; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #475569; }
+        .logo-preview-box { height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; background: #000; border-radius: 4px; padding: 5px; }
+        .logo-thumb { max-width: 100%; max-height: 100%; object-fit: contain; }
+        
+        .preview-wrapper { background: #000; border-radius: 8px; overflow: hidden; aspect-ratio: 16/9; border: 1px solid #475569; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); }
+        video { width: 100%; height: 100%; outline: none; }
+        pre#status { background: #000; color: var(--success); padding: 15px; border-radius: 8px; font-size: 13px; overflow-x: auto; border: 1px solid #475569; font-family: monospace;}
+        
+        /* Cuộn thanh mượt mà */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="topbar">
+        <h1>IPTV HEADEND PRO</h1>
+        <div class="stream-indicator">
+            <span class="dot" id="status_dot"></span>
+            <span id="stream_mode">IDLE</span>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <div class="dash-box"><h2><span id="cpu">0%</span></h2><span style="color:var(--text-muted); font-size:14px; text-transform:uppercase;">CPU Usage</span></div>
+        <div class="dash-box"><h2><span id="ram">0%</span></h2><span style="color:var(--text-muted); font-size:14px; text-transform:uppercase;">RAM Usage</span></div>
+        <div class="dash-box"><h2><span id="bitrate_live">0</span></h2><span style="color:var(--text-muted); font-size:14px; text-transform:uppercase;">Target Bitrate</span></div>
+    </div>
+
+    <div class="grid-layout">
+        <div class="main-controls">
+            
+            <div class="card">
+                <h2>Live Preview (Web Monitoring)</h2>
+                <div class="preview-wrapper">
+                    <video id="preview_video" controls autoplay muted></video>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Streaming Hub</h2>
+                
+                <div class="stream-grid">
+                    <div class="stream-box">
+                        <h3>IPTV Multicast</h3>
+                        <input type="text" id="multicast_ip" value="239.1.1.1" placeholder="IP Address">
+                        <input type="text" id="multicast_port" value="5000" placeholder="Port">
+                        <div class="btn-group">
+                            <button class="start-btn" onclick="startMulticast(event)">START</button>
+                            <button class="stop-btn" onclick="stopStream()">STOP</button>
+                        </div>
+                    </div>
+
+                    <div class="stream-box">
+                        <h3>HLS Streaming</h3>
+                        <div class="btn-group" style="margin-top: 100px;">
+                            <button class="start-btn" onclick="startHLS(event)">START</button>
+                            <button class="stop-btn" onclick="stopStream()">STOP</button>
+                        </div>
+                    </div>
+
+                    <div class="stream-box full-width">
+                        <h3>RTSP Stream (Server)</h3>
+                        <div class="btn-group">
+                            <button class="start-btn" onclick="startRTSP(event)">START RTSP SERVER</button>
+                            <button class="stop-btn" onclick="stopStream()">STOP RTSP</button>
+                        </div>
+                    </div>
+
+                    <div class="stream-box full-width">
+                        <h3>RTSP Camera Input</h3>
+                        <input type="text" id="rtsp_url" placeholder="rtsp://admin:Admin%40123@192.168.1.212:554">
+                        <div class="btn-group">
+                            <button class="start-btn" onclick="startRTSPCamera(event)">START CAMERA</button>
+                            <button class="stop-btn" onclick="stopStream()">STOP CAMERA</button>
+                        </div>
+                    </div>
+
+                    <div class="stream-box full-width">
+                        <h3>Network Stream Relay (UDP/Multicast/HTTP)</h3>
+                        <input type="text" id="network_url" placeholder="Nhập luồng (VD: udp://@239.1.1.1:5000)">
+                        
+                        <div style="margin-top: 10px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                            <label style="font-size: 14px; color: #fff;">Chế độ phát:</label>
+                            <select id="network_mode" style="margin-bottom: 0;">
+                                <option value="hls">Chỉ xem trên Web (HLS)</option>
+                                <option value="multicast">Phát lại ra Multicast</option>
+                                <option value="rtsp">Phát lại ra RTSP Server</option>
+                            </select>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button class="start-btn" onclick="startNetworkRelay(event)">START RELAY</button>
+                            <button class="stop-btn" onclick="stopStream()">STOP RELAY</button>
+                        </div>
+                    </div>
+                    </div>
+            </div>
+
+        </div>
+
+        <div class="sidebar">
+            
+            <div class="card">
+                <h2>Global Settings</h2>
+                <label style="font-size: 13px; margin-bottom: 8px; display: block; color: var(--text-muted); text-transform: uppercase;">Video Bitrate:</label>
+                <input type="text" id="bitrate" value="4000k" placeholder="e.g., 4000k">
+            </div>
+
+            <div class="card">
+                <h2>Media Manager</h2>
+                <input type="file" id="videos" multiple>
+                <button class="primary-btn" onclick="uploadVideos()">Upload Videos</button>
+                <div id="upload_text" style="margin-top: 10px; font-size: 13px; color: var(--success);"></div>
+                <div id="playlist"></div>
+            </div>
+
+            <div class="card">
+                <h2>Logo & Overlay</h2>
+                <input type="file" id="logos" multiple>
+                <button class="primary-btn" onclick="uploadLogos()">Upload Logos</button>
+                
+                <div id="logo_list" class="logo-grid"></div>
+
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #334155;">
+                    <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; font-size: 14px; cursor: pointer;">
+                        <input type="checkbox" id="overlay" style="width: 18px; height: 18px; margin: 0;"> Enable Overlay
+                    </label>
+                    <select id="logo_position">
+                        <option value="top-left">Position: Top Left</option>
+                        <option value="top-right">Position: Top Right</option>
+                        <option value="bottom-left">Position: Bottom Left</option>
+                        <option value="bottom-right">Position: Bottom Right</option>
+                        <option value="center">Position: Center</option>
+                    </select>
+                    <input type="text" id="ticker" placeholder="Type scrolling ticker text here...">
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>System Status Log</h2>
+        <pre id="status">Waiting for commands...</pre>
+    </div>
+
+</div>
+
+<script>
+let uploadedVideos = [];
+let uploadedLogos = [];
+let hls = null;
+
+// Thêm 'network_url' và 'network_mode' vào danh sách lưu trữ cấu hình
+const configInputs = ['multicast_ip', 'multicast_port', 'bitrate', 'ticker', 'logo_position', 'rtsp_url', 'network_url', 'network_mode'];
+
+// AUTO-SAVE & LẤY FILE SERVER
+async function loadConfig() {
+    configInputs.forEach(id => {
+        let saved = localStorage.getItem('iptv_' + id);
+        let el = document.getElementById(id);
+        if(saved && el) el.value = saved;
+    });
+    let savedOverlay = localStorage.getItem('iptv_overlay');
+    let overlayEl = document.getElementById('overlay');
+    if(savedOverlay !== null && overlayEl) overlayEl.checked = (savedOverlay === 'true');
+
+    try {
+        let res = await fetch('/api/get_files');
+        if(res.ok) {
+            let data = await res.json();
+            uploadedVideos = data.videos || [];
+            uploadedLogos = data.logos || [];
+            loadPlaylist();
+            loadLogos();
+
+            let savedVideos = JSON.parse(localStorage.getItem('iptv_selected_videos') || '[]');
+            if (savedVideos.length > 0) {
+                document.querySelectorAll('.video-check').forEach(c => {
+                    c.checked = savedVideos.includes(c.value);
+                });
+            }
+
+            let savedLogo = localStorage.getItem('iptv_selected_logo');
+            if(savedLogo) {
+                let radio = document.querySelector(`input[name="logo_select"][value="${savedLogo}"]`);
+                if(radio) radio.checked = true;
+            }
+        }
+    } catch(e) { console.log("Chưa thể tải API danh sách file"); }
+}
+
+function saveConfig() {
+    configInputs.forEach(id => {
+        let el = document.getElementById(id);
+        if(el) localStorage.setItem('iptv_' + id, el.value);
+    });
+    let overlayEl = document.getElementById('overlay');
+    if(overlayEl) localStorage.setItem('iptv_overlay', overlayEl.checked);
+    localStorage.setItem('iptv_selected_videos', JSON.stringify(getSelectedVideos()));
+    localStorage.setItem('iptv_selected_logo', getSelectedLogo());
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadConfig();
+    document.addEventListener('change', saveConfig);
+    document.addEventListener('input', saveConfig);
+});
+
+// CẬP NHẬT STATS
+setInterval(async () => {
+    try {
+        const res = await fetch('/stats');
+        if(res.ok) {
+            const data = await res.json();
+            let cpu = document.getElementById('cpu');
+            let ram = document.getElementById('ram');
+            let br = document.getElementById('bitrate_live');
+            if(cpu) cpu.innerText = data.cpu + '%';
+            if(ram) ram.innerText = data.ram + '%';
+            if(br) br.innerText = data.bitrate || "0";
+        }
+    } catch(e) {}
+}, 2000);
+
+// CHỐNG XOAY VÒNG VÀ TỰ ĐỘNG CHUYỂN BÀI LIÊN TIẾP CHO HLS
+function initVideoPreview() {
+    const video = document.getElementById('preview_video');
+    if(!video) return;
+    video.style.display = 'block';
+    
+    // Thêm timestamp để trình duyệt luôn tải file m3u8 của video mới, không bị dính cache
+    const source = `/hls/stream.m3u8?t=${new Date().getTime()}`; 
+    
+    if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+        if(hls) { hls.destroy(); hls = null; }
+        
+        hls = new Hls({ 
+            manifestLoadingMaxRetry: 5,
+            manifestLoadingRetryDelay: 1000
+        });
+        
+        hls.loadSource(source);
+        hls.attachMedia(video);
+        
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            video.play().catch(() => console.log("Trình duyệt chặn autoplay"));
+        });
+        
+        // ==============================================================
+        // SỰ KIỆN QUAN TRỌNG: KHI HẾT 1 VIDEO TRONG PLAYLIST
+        // Trình duyệt báo hết phim -> Xóa player cũ -> Đợi 2.5s -> Bật lại
+        // ==============================================================
+        video.onended = function() {
+            console.log("Đã phát xong 1 video. Đang tự động chuyển bài tiếp theo...");
+            if(hls) { hls.destroy(); hls = null; }
+            // Chờ 2.5 giây để FFmpeg bên Python kịp kết xuất đoạn m3u8 mới
+            setTimeout(initVideoPreview, 2500); 
+        };
+
+        // Bắt lỗi mất luồng do mạng hoặc server gián đoạn
+        hls.on(Hls.Events.ERROR, function (event, data) {
+            if (data.fatal) {
+                console.log("Đang đổi Video hoặc mất luồng. Tự động kết nối lại...");
+                if(hls) { hls.destroy(); hls = null; }
+                setTimeout(initVideoPreview, 2500); 
+            }
+        });
+
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Fallback dành riêng cho Safari trên iOS / Mac
+        video.src = source;
+        video.addEventListener('loadedmetadata', () => video.play().catch(e=>console.log(e)));
+        
+        // Sự kiện chuyển bài cho Safari
+        video.onended = function() {
+            console.log("Safari: Chuyển bài...");
+            setTimeout(initVideoPreview, 2500);
+        };
+    }
+}
+
+// CÁC HÀM XỬ LÝ NÚT BẤM
+function setStatus(data) { 
+    let st = document.getElementById('status');
+    if(st) st.innerText = JSON.stringify(data, null, 2); 
+}
+function updateStreamMode(mode) { 
+    let sm = document.getElementById('stream_mode');
+    if(sm) sm.innerText = mode; 
+    let dot = document.getElementById('status_dot');
+    if(dot) { mode === 'IDLE' ? dot.classList.remove('active') : dot.classList.add('active'); }
+}
+function resetButtons() { 
+    document.querySelectorAll('.start-btn, .stop-btn, .primary-btn').forEach(b => { 
+        if(b.innerText.includes('RUNNING')) b.innerText = b.innerText.replace('RUNNING', 'START'); 
+        b.disabled = false; 
+    }); 
+}
+function setRunningButton(btn) { 
+    resetButtons(); 
+    if(btn) { btn.innerText = 'RUNNING'; btn.disabled = true; }
+}
+function getSelectedVideos() { return Array.from(document.querySelectorAll('.video-check:checked')).map(c => c.value); }
+function getSelectedLogo() { let r = document.querySelector('input[name="logo_select"]:checked'); return r ? r.value : ''; }
+
+async function uploadVideos() {
+    let fileInput = document.getElementById('videos');
+    if(!fileInput || fileInput.files.length === 0) return alert("Vui lòng chọn video!");
+    let formData = new FormData();
+    for (let i = 0; i < fileInput.files.length; i++) formData.append('videos', fileInput.files[i]);
+    
+    let ut = document.getElementById('upload_text');
+    if(ut) ut.innerText = 'Uploading...';
+    
+    try {
+        let response = await fetch('/upload', { method: 'POST', body: formData });
+        let result = await response.json();
+        uploadedVideos = result.files;
+        loadPlaylist();
+        saveConfig(); 
+        if(ut) ut.innerText = 'Upload Complete!';
+        setStatus(result);
+    } catch(e) { if(ut) ut.innerText = 'Upload Error!'; }
+}
+
+function loadPlaylist() {
+    let html = '';
+    uploadedVideos.forEach((video, index) => {
+        html += `<div class='video-item'><label><input type='checkbox' class='video-check' value='${video}' checked onchange="saveConfig()"> CH ${index + 1} - ${video}</label></div>`;
+    });
+    let pl = document.getElementById('playlist');
+    if(pl) pl.innerHTML = html;
+}
+
+async function uploadLogos() {
+    let fileInput = document.getElementById('logos');
+    if(!fileInput || fileInput.files.length === 0) return alert("Vui lòng chọn Logo!");
+    for (let i = 0; i < fileInput.files.length; i++) {
+        let formData = new FormData();
+        formData.append('logo', fileInput.files[i]);
+        await fetch('/upload_logo', { method: 'POST', body: formData });
+        if(!uploadedLogos.includes(fileInput.files[i].name)) uploadedLogos.push(fileInput.files[i].name);
+    }
+    loadLogos();
+    saveConfig();
+}
+
+function loadLogos() {
+    let html = '';
+    uploadedLogos.forEach(logo => {
+        html += `<div class='logo-item'><div class='logo-preview-box'><img src='/logo/${logo}' class='logo-thumb'></div><label style="font-size: 13px; cursor:pointer;"><input type='radio' name='logo_select' value='${logo}' onchange="saveConfig()"> ${logo}</label></div>`;
+    });
+    let ll = document.getElementById('logo_list');
+    if(ll) ll.innerHTML = html;
+}
+
+function buildPayload() {
+    saveConfig();
+    return {
+        videos: getSelectedVideos(),
+        bitrate: document.getElementById('bitrate') ? document.getElementById('bitrate').value : "4000k",
+        overlay: document.getElementById('overlay') ? document.getElementById('overlay').checked : false,
+        logo: getSelectedLogo(),
+        logo_position: document.getElementById('logo_position') ? document.getElementById('logo_position').value : "top-left",
+        ticker: document.getElementById('ticker') ? document.getElementById('ticker').value : ""
+    };
+}
+
+async function startMulticast(event) {
+    setRunningButton(event.target);
+    updateStreamMode('MULTICAST RUNNING');
+    let payload = buildPayload();
+    payload.ip = document.getElementById('multicast_ip') ? document.getElementById('multicast_ip').value : "239.1.1.1";
+    payload.port = document.getElementById('multicast_port') ? document.getElementById('multicast_port').value : "5000";
+    try {
+        let res = await fetch('/start_multicast', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+        setTimeout(initVideoPreview, 2000); 
+        setStatus(await res.json());
+    } catch(e) { resetButtons(); }
+}
+
+async function startHLS(event) {
+    setRunningButton(event.target);
+    updateStreamMode('HLS RUNNING');
+    try {
+        let res = await fetch('/start_hls', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(buildPayload()) });
+        setTimeout(initVideoPreview, 2000);
+        setStatus(await res.json());
+    } catch(e) { resetButtons(); }
+}
+
+async function startRTSP(event) {
+    setRunningButton(event.target);
+    updateStreamMode('RTSP RUNNING');
+    try {
+        let res = await fetch('/start_rtsp_stream', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(buildPayload()) });
+        setTimeout(initVideoPreview, 2000);
+        setStatus(await res.json());
+    } catch(e) { resetButtons(); }
+}
+
+async function startRTSPCamera(event) {
+    saveConfig();
+    setRunningButton(event.target);
+    updateStreamMode('RTSP CAMERA RUNNING');
+    let url = document.getElementById('rtsp_url') ? document.getElementById('rtsp_url').value : "";
+    try {
+        let res = await fetch('/start_rtsp_camera', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ url: url }) });
+        setTimeout(initVideoPreview, 2000);
+        setStatus(await res.json());
+    } catch(e) { resetButtons(); }
+}
+
+// === HÀM XỬ LÝ MỚI: NETWORK RELAY ===
+async function startNetworkRelay(event) {
+    saveConfig();
+    setRunningButton(event.target);
+    updateStreamMode('NETWORK RELAY RUNNING');
+    
+    let payload = buildPayload();
+    payload.url = document.getElementById('network_url') ? document.getElementById('network_url').value : "";
+    payload.mode = document.getElementById('network_mode') ? document.getElementById('network_mode').value : "hls";
+    payload.ip = document.getElementById('multicast_ip') ? document.getElementById('multicast_ip').value : "239.1.1.1";
+    payload.port = document.getElementById('multicast_port') ? document.getElementById('multicast_port').value : "5000";
+    
+    try {
+        let res = await fetch('/start_network_relay', { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify(payload) 
+        });
+        setTimeout(initVideoPreview, 2000);
+        setStatus(await res.json());
+    } catch(e) { resetButtons(); }
+}
+// =====================================
+
+async function stopStream() {
+    resetButtons();
+    updateStreamMode('IDLE');
+    if(hls) { hls.destroy(); hls = null; }
+    let pv = document.getElementById('preview_video');
+    if(pv) { pv.pause(); pv.src = ""; pv.style.display = 'none'; }
+    try {
+        let res = await fetch('/stop', { method: 'POST' });
+        setStatus(await res.json());
+    } catch(e) {}
+}
+</script>
+
+</body>
+</html>
